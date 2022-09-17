@@ -1,6 +1,8 @@
 package plc.project;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * The lexer works through three main functions:
@@ -15,9 +17,7 @@ import java.util.List;
  *
  * The {@link #peek(String...)} and {@link #match(String...)} functions are * helpers you need to use, they will make the implementation a lot easier. */
 public final class Lexer {
-
     private final CharStream chars;
-
     public Lexer(String input) {
         chars = new CharStream(input);
     }
@@ -27,7 +27,19 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        throw new UnsupportedOperationException(); //TODO
+        List<Token> tokens = new ArrayList<>();
+        while(chars.index < chars.input.length()) {
+            Token token = lexToken();
+            if(token != null) {
+                tokens.add(token);
+            } else {
+                if(peek("\b") || peek("\r") || peek("\n") || peek("\t")) {
+                    chars.advance();
+                }
+            }
+        }
+
+        return tokens;
     }
 
     /**
@@ -39,23 +51,51 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+        if(peek("@?[A-Za-z][A-Za-z0-9_-]*")) {
+            return lexIdentifier();
+        } else if(peek("-?(?!0\\d+)\\d+") || peek("-?(?!0\\d+)\\d+\\.\\d+")) {
+            return lexNumber();
+        } else if(peek("\"[^\"\\\\]*(?:\\\\[bnrt'\"\\\\][^\\\\\"]*)*\"")) {
+            return lexString();
+        } else if(peek("'")) {
+            return lexCharacter();
+        }  else if(peek("OPERATOR")) {
+            return lexOperator();
+        }
+
+        return null;
     }
 
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+        match("@");
+        match("[A-Za-z]");
+        while(match("[A-Za-z0-9_-]"));
+        return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
-        throw new UnsupportedOperationException(); //TODO
+        match("-");
+        while(match("\\d"));
+        if(match("\\.")) {
+            while(match("\\d"));
+            return chars.emit(Token.Type.DECIMAL);
+        }
+
+        return chars.emit(Token.Type.INTEGER);
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        match("'");
+        match("[^'\"\\\\\\s]|(\\\\[bnrt'\"\\\\])");
+        match("'");
+
+        return chars.emit(Token.Type.CHARACTER);
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+        while(match("[^\"\\\\]"));
+
+        return chars.emit(Token.Type.STRING);
     }
 
     public void lexEscape() {
@@ -63,16 +103,23 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        return chars.emit(Token.Type.OPERATOR);
     }
 
     /**
      * Returns true if the next sequence of characters match the given patterns,
      * which should be a regex. For example, {@code peek("a", "b", "c")} would
      * return true if the next characters are {@code 'a', 'b', 'c'}.
+     * Peek is to only examine one character (the current index)
+     * at a time. In this case, you would only include 1 pattern (patterns[0])
      */
     public boolean peek(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in Lecture)
+        for(int i = 0; i < patterns.length; i++) {
+            if(!chars.has(i) || !String.valueOf(chars.get(i)).matches(patterns[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -81,7 +128,13 @@ public final class Lexer {
      * true. Hint - it's easiest to have this method simply call peek.
      */
     public boolean match(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in Lecture)
+        boolean peek = peek(patterns);
+        if(peek) {
+            for(int i = 0; i < patterns.length; i++){
+                chars.advance();
+            }
+        }
+        return peek;
     }
 
     /**
