@@ -3,7 +3,6 @@ package plc.project;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * The lexer works through three main functions:
  *
@@ -29,13 +28,12 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while(chars.index < chars.input.length()) {
-            Token token = lexToken();
-            if(token != null) {
-                tokens.add(token);
+            if(peek("\\s")) {
+                chars.advance();
+                chars.skip();
             } else {
-                if(peek("\b") || peek("\r") || peek("\n") || peek("\t")) {
-                    chars.advance();
-                }
+                Token token = lexToken();
+                tokens.add(token);
             }
         }
 
@@ -53,13 +51,13 @@ public final class Lexer {
     public Token lexToken() {
         if(peek("@?[A-Za-z][A-Za-z0-9_-]*")) {
             return lexIdentifier();
-        } else if(peek("-?(?!0\\d+)\\d+") || peek("-?(?!0\\d+)\\d+\\.\\d+")) {
+        } else if(peek("-") || peek("(?!0\\d+)\\d+") || peek("(?!0\\d+)\\d+\\.\\d+")) {
             return lexNumber();
-        } else if(peek("\"[^\"\\\\]*(?:\\\\[bnrt'\"\\\\][^\\\\\"]*)*\"")) {
+        } else if(peek("\"")) {
             return lexString();
         } else if(peek("'")) {
             return lexCharacter();
-        }  else if(peek("OPERATOR")) {
+        } else if(peek("[^\\s]")) {
             return lexOperator();
         }
 
@@ -76,6 +74,7 @@ public final class Lexer {
     public Token lexNumber() {
         match("-");
         while(match("\\d"));
+
         if(match("\\.")) {
             while(match("\\d"));
             return chars.emit(Token.Type.DECIMAL);
@@ -86,23 +85,45 @@ public final class Lexer {
 
     public Token lexCharacter() {
         match("'");
-        match("[^'\"\\\\\\s]|(\\\\[bnrt'\"\\\\])");
-        match("'");
+        if (peek("'")) {
+            throw new ParseException("Empty character literal!", chars.index);
+        }
 
+        if(match("\\\\")) {
+            lexEscape();
+            match("'");
+            return chars.emit(Token.Type.CHARACTER);
+        }
+
+        match("[^'\"\\\\]|(\\\\[bnrt'\"\\\\])");
+        match("'");
         return chars.emit(Token.Type.CHARACTER);
     }
 
     public Token lexString() {
-        while(match("[^\"\\\\]"));
+        match("\"");
+        while(match("[^\"\\\\]")) {
+            if(peek("\\\\")) {
+                lexEscape();
+            }
+        }
+
+        if(!match("\"")) {
+            throw new ParseException("Unterminated string!", chars.index);
+        }
 
         return chars.emit(Token.Type.STRING);
     }
 
     public void lexEscape() {
-        throw new UnsupportedOperationException(); //TODO
+        match("\\\\");
+        if(!match("[bnrt'\"\\\\]")) {
+            throw new ParseException("Invalid escape!", chars.index);
+        }
     }
 
     public Token lexOperator() {
+        match("[^\\s]");
         return chars.emit(Token.Type.OPERATOR);
     }
 
@@ -179,5 +200,4 @@ public final class Lexer {
         }
 
     }
-
 }
