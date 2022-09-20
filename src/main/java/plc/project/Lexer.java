@@ -74,15 +74,15 @@ public final class Lexer {
     public Token lexNumber() {
         if(match("0")) {
             if(peek("\\d")) {
-                return null;
+                return chars.emit(null);
             }
         }
+
         match("-");
         while(match("\\d"));
-
         if(match("\\.")) {
             if(!peek("\\d")) {
-                return null;
+                return chars.emit(null);
             }
 
             while(match("\\d"));
@@ -94,7 +94,7 @@ public final class Lexer {
 
     public Token lexCharacter() {
         match("'");
-        if (peek("'")) {
+        if(peek("'")) {
             throw new ParseException("Empty character literal!", chars.index);
         }
 
@@ -105,7 +105,10 @@ public final class Lexer {
         }
 
         match("[^'\"\\\\]|(\\\\[bnrt'\"\\\\])");
-        match("'");
+        if(!match("'")) {
+            throw new ParseException("Unterminated character!", chars.index);
+        }
+
         return chars.emit(Token.Type.CHARACTER);
     }
 
@@ -117,7 +120,7 @@ public final class Lexer {
             }
         }
 
-        if(!match("\"")) {
+        if(!peek("\\s") && !match("\"")) {
             throw new ParseException("Unterminated string!", chars.index);
         }
 
