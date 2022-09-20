@@ -72,10 +72,19 @@ public final class Lexer {
     }
 
     public Token lexNumber() {
+        if(match("0")) {
+            if(peek("\\d")) {
+                return null;
+            }
+        }
         match("-");
         while(match("\\d"));
 
         if(match("\\.")) {
+            if(!peek("\\d")) {
+                return null;
+            }
+
             while(match("\\d"));
             return chars.emit(Token.Type.DECIMAL);
         }
@@ -123,7 +132,16 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
-        match("[^\\s]");
+        if(match("&")) {
+            match("&");
+        } else if(match("|")) {
+            match("|");
+        } else if(match("!") || match("=") || match("<") || match(">")) {
+            match("=");
+        } else {
+            match("[^\\s]");
+        }
+
         return chars.emit(Token.Type.OPERATOR);
     }
 

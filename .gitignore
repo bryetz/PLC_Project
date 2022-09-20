@@ -40,3 +40,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/src/main/java/plc/homework/
+/src/test/java/plc/homework/
