@@ -81,6 +81,9 @@ public class LexerTests {
     private static Stream<Arguments> testString() {
         return Stream.of(
                 Arguments.of("Empty", "\"\"", true),
+                Arguments.of("Space", "\" \"", true),
+                Arguments.of("Tab at beginning", "\"\tyo\"", true),
+                Arguments.of("Numbers", "\"1234yes\"", true),
                 Arguments.of("Alphabetic", "\"abc\"", true),
                 Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
                 Arguments.of("Unterminated", "\"unterminated", false),
@@ -98,7 +101,10 @@ public class LexerTests {
     private static Stream<Arguments> testOperator() {
         return Stream.of(
                 Arguments.of("Character", "(", true),
-                Arguments.of("Comparison", "!=", true),
+                Arguments.of("Not equal", "!=", true),
+                Arguments.of("Equal", "=", true),
+                Arguments.of("And", "&&", true),
+                Arguments.of("Or", "||", true),
                 Arguments.of("Space", " ", false),
                 Arguments.of("Tab", "\t", false)
         );
