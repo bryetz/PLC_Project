@@ -137,10 +137,16 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, ".", 1),
                         new Token(Token.Type.IDENTIFIER, "B", 2)
                 )),
-                Arguments.of("Example 4", "-@five0 2.03", Arrays.asList(
+                Arguments.of("Example 4", "-@five0@ 2.03", Arrays.asList(
                         new Token(Token.Type.OPERATOR, "-", 0),
                         new Token(Token.Type.IDENTIFIER, "@five0", 1),
-                        new Token(Token.Type.DECIMAL, "2.03", 8)
+                        new Token(Token.Type.IDENTIFIER, "@", 7),
+                        new Token(Token.Type.DECIMAL, "2.03", 9)
+                )),
+                Arguments.of("Example 5", "\\'\\\"\\'string\\\"\\'\\\"", Arrays.asList(
+                        new Token(Token.Type.CHARACTER, "\'\"\'", 0),
+                        new Token(Token.Type.IDENTIFIER, "string", 6),
+                        new Token(Token.Type.STRING, "\"'\"", 12)
                 ))
         );
     }
