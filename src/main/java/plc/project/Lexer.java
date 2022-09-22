@@ -49,7 +49,7 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if(peek("@?[A-Za-z][A-Za-z0-9_-]*")) {
+        if(peek("@") || peek ("[A-Za-z][A-Za-z0-9_-]*")) {
             return lexIdentifier();
         } else if(peek("-") || peek("(?!0\\d+)\\d+") || peek("(?!0\\d+)\\d+\\.\\d+")) {
             return lexNumber();
@@ -74,20 +74,29 @@ public final class Lexer {
     public Token lexNumber() {
         if(match("0")) {
             if(peek("\\d")) {
-                return chars.emit(null);
+                return chars.emit(Token.Type.INTEGER);
             }
         }
 
-        match("-");
-        while(match("\\d"));
-        if(match("\\.")) {
-            if(!peek("\\d")) {
-                return chars.emit(null);
+        if(match("-")) {
+            if(peek("[^\\d]")) {
+                return chars.emit(Token.Type.OPERATOR);
             }
-
-            while(match("\\d"));
-            return chars.emit(Token.Type.DECIMAL);
         }
+
+       while(match("\\d")) {
+           if (peek("\\.")) {
+               chars.index++;
+               if (!peek("\\d")) {
+                   chars.index--;
+                   return chars.emit(Token.Type.INTEGER);
+               }
+               chars.index--;
+               match("\\.");
+               while (match("\\d")) ;
+               return chars.emit(Token.Type.DECIMAL);
+           }
+       }
 
         return chars.emit(Token.Type.INTEGER);
     }
