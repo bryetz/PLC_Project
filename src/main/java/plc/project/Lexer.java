@@ -49,7 +49,7 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if(peek("@") || peek("[A-Za-z]")) {
+        if(peek("@") || peek ("[A-Za-z]")) {
             return lexIdentifier();
         } else if(peek("-") || peek("(?!0\\d+)\\d+") || peek("(?!0\\d+)\\d+\\.\\d+")) {
             return lexNumber();
@@ -102,8 +102,11 @@ public final class Lexer {
     }
 
     public Token lexCharacter() {
+        match("'");
         if(peek("\\\\")) {
             lexEscape();
+            match("'");
+            return chars.emit(Token.Type.CHARACTER);
         } else if(match("[^'\\n\\r\\\\]")) {
             if(!match("'")) {
                 throw new ParseException("Unterminated character!", chars.index);
