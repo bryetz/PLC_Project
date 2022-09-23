@@ -233,7 +233,7 @@ public class LexerTests {
                         "FUN foo() DO\n" +
                         "    WHILE i != 1 DO\n" +
                         "        IF i > 0 DO\n" +
-                        "            print(\\\"bar\\\");\n" +
+                        "            print(\"bar\");\n" +
                         "        END\n" +
                         "        i = i + inc;\n" +
                         "    END\n" +

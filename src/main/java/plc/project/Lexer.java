@@ -131,14 +131,8 @@ public final class Lexer {
 
     public Token lexString() {
         match("\"");
-        while(match("[^\"\\n\\r\\\\]")) {
+        while(match("[^\"\\n\\r]")) {
             if(peek("\\\\")) {
-                if(chars.get(1) == '\"') {
-                    chars.advance();
-                    match("\"");
-                    return chars.emit(Token.Type.STRING);
-                }
-
                 lexEscape();
             }
         }
