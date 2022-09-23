@@ -28,10 +28,13 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokens = new ArrayList<>();
         while(chars.index < chars.input.length()) {
-            if(peek("\\s")) {
+            if(peek("\\s") || peek("[␊␍␉␈␌␋]")) {
                 chars.advance();
                 chars.skip();
             } else {
+                if(peek("\\\\")) {
+                    chars.advance();
+                }
                 Token token = lexToken();
                 tokens.add(token);
             }
@@ -53,7 +56,7 @@ public final class Lexer {
             return lexIdentifier();
         } else if(peek("-") || peek("(?!0\\d+)\\d+") || peek("(?!0\\d+)\\d+\\.\\d+")) {
             return lexNumber();
-        } else if(peek("\\\\") || peek("'")) {
+        } else if(peek("'")) {
             return lexCharacter();
         } else if(peek("\"")) {
             return lexString();
@@ -72,15 +75,25 @@ public final class Lexer {
     }
 
     public Token lexNumber() {
-        if(match("0")) {
-            if(peek("\\d")) {
-                return chars.emit(Token.Type.INTEGER);
-            }
-        }
-
         if(match("-")) {
             if(peek("[^\\d]")) {
                 return chars.emit(Token.Type.OPERATOR);
+            } else if(peek("0")) {
+                if(chars.has(1) && !String.valueOf(chars.get(1)).matches("[.]")) {
+                    return chars.emit(Token.Type.OPERATOR);
+                }
+            }
+        }
+
+        if(match("0")) {
+            if(peek("\\d")) {
+                return chars.emit(Token.Type.INTEGER);
+            } else if(peek("\\.")) {
+                if(chars.has(1) && String.valueOf(chars.get(1)).matches("\\d")) {
+                    match("\\.");
+                    while(match("\\d"));
+                    return chars.emit(Token.Type.DECIMAL);
+                }
             }
         }
 
@@ -120,6 +133,12 @@ public final class Lexer {
         match("\"");
         while(match("[^\"\\n\\r\\\\]")) {
             if(peek("\\\\")) {
+                if(chars.get(1) == '\"') {
+                    chars.advance();
+                    match("\"");
+                    return chars.emit(Token.Type.STRING);
+                }
+
                 lexEscape();
             }
         }
@@ -141,9 +160,9 @@ public final class Lexer {
     public Token lexOperator() {
         if(match("&")) {
             match("&");
-        } else if(match("|")) {
-            match("|");
-        } else if(match("!") || match("=") || match("<") || match(">")) {
+        } else if(match("\\|")) {
+            match("\\|");
+        } else if(match("!") || match("=")) {
             match("=");
         } else {
             match("[^\\s]");

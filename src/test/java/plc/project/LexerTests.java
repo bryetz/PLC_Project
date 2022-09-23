@@ -209,10 +209,24 @@ public class LexerTests {
                         new Token(Token.Type.IDENTIFIER, "@", 7),
                         new Token(Token.Type.DECIMAL, "2.03", 9)
                 )),
-                Arguments.of("Example 5", "\\'\\\"\\'string\\\"\\'\\\"", Arrays.asList(
+                Arguments.of("Example 5", "\'\"\'string\"\'\"", Arrays.asList(
                         new Token(Token.Type.CHARACTER, "\'\"\'", 0),
                         new Token(Token.Type.IDENTIFIER, "string", 3),
-                        new Token(Token.Type.STRING, "\"'\"", 8)
+                        new Token(Token.Type.STRING, "\"'\"", 9)
+                )),
+                Arguments.of("Example 6", "one␈two", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "one", 0),
+                        new Token(Token.Type.IDENTIFIER, "two", 4)
+                )),
+                Arguments.of("Example 7 Zeros", "-0 -0.0 0..00.0", Arrays.asList(
+                        new Token(Token.Type.OPERATOR, "-", 0),
+                        new Token(Token.Type.INTEGER, "0", 1),
+                        new Token(Token.Type.DECIMAL, "-0.0", 3),
+                        new Token(Token.Type.INTEGER, "0", 8),
+                        new Token(Token.Type.OPERATOR, ".", 9),
+                        new Token(Token.Type.OPERATOR, ".", 10),
+                        new Token(Token.Type.INTEGER, "0", 11),
+                        new Token(Token.Type.DECIMAL, "0.0", 12)
                 )),
                 Arguments.of("LexerTestCaseFoo", "VAR i = -1 : Integer;\n" +
                         "VAL inc = 2 : Integer;\n" +
