@@ -99,12 +99,9 @@ public final class Lexer {
 
        while(match("\\d")) {
            if(peek("\\.")) {
-               chars.index++;
-               if(!peek("\\d")) {
-                   chars.index--;
+               if(!chars.has(1) || !String.valueOf(chars.get(1)).matches("\\d")) {
                    return chars.emit(Token.Type.INTEGER);
                }
-               chars.index--;
                match("\\.");
                while(match("\\d"));
                return chars.emit(Token.Type.DECIMAL);
@@ -118,12 +115,16 @@ public final class Lexer {
         match("'");
         if(peek("\\\\")) {
             lexEscape();
-            match("'");
+            if(!match("'")) {
+                throw new ParseException("Unterminated character!", chars.index);
+            }
             return chars.emit(Token.Type.CHARACTER);
         } else if(match("[^'\\n\\r\\\\]")) {
             if(!match("'")) {
                 throw new ParseException("Unterminated character!", chars.index);
             }
+        } else if(match("'")) {
+            throw new ParseException("Empty character literal!", chars.index);
         }
 
         return chars.emit(Token.Type.CHARACTER);
@@ -156,7 +157,8 @@ public final class Lexer {
             match("&");
         } else if(match("\\|")) {
             match("\\|");
-        } else if(match("!") || match("=")) {
+        } else if(match("!")) {
+            match("=");
             match("=");
         } else {
             match("[^\\s]");

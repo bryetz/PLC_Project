@@ -228,6 +228,11 @@ public class LexerTests {
                         new Token(Token.Type.INTEGER, "0", 11),
                         new Token(Token.Type.DECIMAL, "0.0", 12)
                 )),
+                Arguments.of("Example 8", "1.2.3", Arrays.asList(
+                        new Token(Token.Type.DECIMAL, "1.2", 0),
+                        new Token(Token.Type.OPERATOR, ".", 3),
+                        new Token(Token.Type.INTEGER, "3", 4)
+                        )),
                 Arguments.of("LexerTestCaseFoo", "VAR i = -1 : Integer;\n" +
                         "VAL inc = 2 : Integer;\n" +
                         "FUN foo() DO\n" +
@@ -246,6 +251,13 @@ public class LexerTests {
         ParseException exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"unterminated").lex());
         Assertions.assertEquals(13, exception.getIndex());
+    }
+
+    @Test
+    void testEmptyCharacterLiteral() {
+        ParseException exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("''").lex());
+        Assertions.assertEquals(2, exception.getIndex());
     }
 
     /**
