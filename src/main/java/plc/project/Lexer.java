@@ -157,8 +157,7 @@ public final class Lexer {
             match("&");
         } else if(match("\\|")) {
             match("\\|");
-        } else if(match("!")) {
-            match("=");
+        } else if(match("!") || match("=")) {
             match("=");
         } else {
             match("[^\\s]");

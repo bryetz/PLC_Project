@@ -102,6 +102,7 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Character", "(", true),
                 Arguments.of("Not equal", "!=", true),
+                Arguments.of("Equal equal", "=", true),
                 Arguments.of("Equal", "=", true),
                 Arguments.of("And", "&&", true),
                 Arguments.of("Or", "||", true),
