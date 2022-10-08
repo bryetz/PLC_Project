@@ -89,12 +89,12 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
-//        parseExpression();
-//        if(match("=")){
-//
-//        }
-//        return
-        throw new UnsupportedOperationException();
+        Ast.Expression exp = parseExpression();
+        if (match("=")) {
+            return new Ast.Expression.Statement.Assignment(exp, parseExpression());
+        }
+
+        return new Ast.Statement.Expression(exp);
     }
 
     /**
@@ -259,16 +259,17 @@ public Ast.Expression parsePrimaryExpression() throws ParseException {
         stringToken = stringToken.replace("\\t","\t");
         return new Ast.Expression.Literal(stringToken);
     } else if(match("(")) {
-        parseExpression();
+        Ast.Expression exp = parseExpression();
         if(!match(")")) {
             throw new ParseException("No closing parentheses for primary expression", -1);
         }
+
+        return new Ast.Expression.Group(exp);
     } else if(match(Token.Type.IDENTIFIER)) {
         Token t = tokens.get(-1);
         List<Ast.Expression> arguments = new java.util.ArrayList<>(Collections.emptyList());
         if(match("(")) {
-            if(peek(")")) {
-                match(")");
+            if(match(")")) {
                 return new Ast.Expression.Function(t.getLiteral(), arguments);
             }
 
@@ -279,25 +280,27 @@ public Ast.Expression parsePrimaryExpression() throws ParseException {
                 arguments.add(new Ast.Expression.Access(Optional.empty(),tokens.get(-1).getLiteral()));
             }
 
-            if(!peek(")")) {
-                //throw new ParseException("No closing parenthesis for function ",-1);
-            } else {
-                match(")");
+            if(!match(")")) {
+                throw new ParseException("No closing parenthesis for function ",-1);
             }
 
             return new Ast.Expression.Function(t.getLiteral(),arguments);
-        } else if(match("[")) {
-            Optional<Ast.Expression> a= Optional.of(new Ast.Expression.Literal(tokens.get(-1).getLiteral()));
-            if(!peek("]")) {
+
+        } else if(peek("[")) {
+            String lit = tokens.get(-1).getLiteral();
+            match("[");
+            Ast.Expression exp = parseExpression();
+
+            if(!match("]")) {
                 throw new ParseException("No closing bracket for function ", -1);
             }
-            match("]");
-            arguments.add(new Ast.Expression.Access(a,tokens.get(-1).getLiteral()));
+
+            return new Ast.Expression.Access(Optional.of(exp), lit);
+
         }
-    } else {
-        throw new ParseException("Invalid Primary Expression", -1);
     }
-    throw new UnsupportedOperationException(); //TODO
+
+    return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
 }
 
 
