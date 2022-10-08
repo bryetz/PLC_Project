@@ -4,10 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="652a4003-61ac-4b39-a32b-e79f8903558d" name="Changes" comment="">
       <change afterPath="$PROJECT_DIR$/src/main/java/plc/project/Ast.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/plc/project/Parser.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/test/java/plc/project/ParserExpressionTests.java" afterDir="false" />
+=======
+    <list default="true" id="1699f596-9c21-40bc-947c-58d459ec0b06" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+>>>>>>> 785d5c37b43dc62acad97ef6b4b3e9f5f2d95599
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,12 +57,17 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+<<<<<<< HEAD
   <component name="ProjectId" id="2EgI7G95fIGhdYMsy4EvZzR0kSJ" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+=======
+  <component name="ProjectId" id="2F5gtFvdjY0Bi7EH5YQPu7LlBB6" />
+>>>>>>> 785d5c37b43dc62acad97ef6b4b3e9f5f2d95599
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;last_opened_file_path&quot;: &quot;/Users/bryanetzine/IdeaProjects/PLC_Project&quot;,
@@ -99,15 +111,45 @@
         <item itemvalue="Gradle.LexerTests.testEmptyCharacterLiteral" />
       </list>
     </recent_temporary>
+=======
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "reference.projectsettings.compiler.javacompiler"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="LexerTests" type="JUnit" factoryName="JUnit">
+      <module name="PLC_Project.test" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <option name="ALTERNATIVE_JRE_PATH" value="temurin-1.8" />
+      <option name="PACKAGE_NAME" value="plc.project" />
+      <option name="MAIN_CLASS_NAME" value="plc.project.LexerTests" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+>>>>>>> 785d5c37b43dc62acad97ef6b4b3e9f5f2d95599
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
+<<<<<<< HEAD
       <changelist id="652a4003-61ac-4b39-a32b-e79f8903558d" name="Changes" comment="" />
       <created>1663010633134</created>
+=======
+      <changelist id="1699f596-9c21-40bc-947c-58d459ec0b06" name="Changes" comment="" />
+      <created>1663787575880</created>
+>>>>>>> 785d5c37b43dc62acad97ef6b4b3e9f5f2d95599
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1663010633134</updated>
+      <updated>1663787575880</updated>
     </task>
     <servers />
   </component>

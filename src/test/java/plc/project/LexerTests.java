@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -65,10 +66,10 @@ public class LexerTests {
 
     private static Stream<Arguments> testCharacter() {
         return Stream.of(
-                Arguments.of("Alphabetic", "\'c\'", true),
-                Arguments.of("Newline Escape", "\'\\n\'", true),
-                Arguments.of("Empty", "\'\'", false),
-                Arguments.of("Multiple", "\'abc\'", false)
+                Arguments.of("Alphabetic", "'c'", true),
+                Arguments.of("Newline Escape", "'\\n'", true),
+                Arguments.of("Empty", "''", false),
+                Arguments.of("Multiple", "'abc'", false)
         );
     }
 
@@ -95,7 +96,7 @@ public class LexerTests {
     @MethodSource
     void testOperator(String test, String input, boolean success) {
         //this test requires our lex() method, since that's where whitespace is handled.
-        test(input, Arrays.asList(new Token(Token.Type.OPERATOR, input, 0)), success);
+        test(input, Collections.singletonList(new Token(Token.Type.OPERATOR, input, 0)), success);
     }
 
     private static Stream<Arguments> testOperator() {
@@ -210,8 +211,8 @@ public class LexerTests {
                         new Token(Token.Type.IDENTIFIER, "@", 7),
                         new Token(Token.Type.DECIMAL, "2.03", 9)
                 )),
-                Arguments.of("Example 5", "\'\"\'string\"\'\"", Arrays.asList(
-                        new Token(Token.Type.CHARACTER, "\'\"\'", 0),
+                Arguments.of("Example 5", "'\"'string\"'\"", Arrays.asList(
+                        new Token(Token.Type.CHARACTER, "'\"'", 0),
                         new Token(Token.Type.IDENTIFIER, "string", 3),
                         new Token(Token.Type.STRING, "\"'\"", 9)
                 )),
