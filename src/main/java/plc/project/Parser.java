@@ -269,10 +269,12 @@ public final class Parser {
             stringToken = stringToken.replace("\\r", "\r");
             stringToken = stringToken.replace("\\t", "\t");
             return new Ast.Expression.Literal(stringToken);
+        } else if (match(")")) {
+            throw new ParseException("Invalid closing parenthesis!", tokens.index);
         } else if (match("(")) {
             Ast.Expression exp = parseExpression();
             if (!match(")")) {
-                throw new ParseException("No closing parentheses for primary expression", tokens.index);
+                throw new ParseException("Missing closing parenthesis!", tokens.index);
             }
 
             return new Ast.Expression.Group(exp);
@@ -280,6 +282,9 @@ public final class Parser {
             Token t = tokens.get(-1);
             List<Ast.Expression> arguments = new java.util.ArrayList<>(Collections.emptyList());
             if (match("(")) {
+                if (match(",")) {
+                    throw new ParseException("Trailing comma not allowed!", tokens.index);
+                }
                 if (match(")")) {
                     return new Ast.Expression.Function(t.getLiteral(), arguments);
                 }
@@ -291,12 +296,12 @@ public final class Parser {
                     arguments.add(new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral()));
                 }
 
-                if (match(",")) {
-                    throw new ParseException("Trailing comma not allowed!", tokens.index);
-                }
-
                 if (!match(")")) {
                     throw new ParseException("No closing parenthesis for function!", tokens.index);
+                }
+
+                if (match(",")) {
+                    throw new ParseException("Trailing comma not allowed!", tokens.index);
                 }
 
                 return new Ast.Expression.Function(t.getLiteral(), arguments);
@@ -315,9 +320,9 @@ public final class Parser {
             } else {
                 return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
             }
+        } else {
+            throw new ParseException("Invalid expression!", tokens.index);
         }
-
-        throw new ParseException("Invalid expression!", tokens.index);
     }
 
 
