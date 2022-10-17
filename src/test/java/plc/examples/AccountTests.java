@@ -28,19 +28,19 @@ public class AccountTests {
     @Test
     void testPassed() {
         Account account = new Account();
-        Assertions.assertEquals(false, account.isOverdrawn());
+        Assertions.assertFalse(account.isOverdrawn());
     }
 
     @Test
     void testFailed() {
         Account account = new Account();
-        Assertions.assertEquals(true, account.isOverdrawn());
+        Assertions.assertTrue(account.isOverdrawn());
     }
 
     @Test
     void testOverdrawn() {
         Account account = new Account(-10);
-        Assertions.assertEquals(true, account.isOverdrawn());
+        Assertions.assertTrue(account.isOverdrawn());
     }
 
     /**

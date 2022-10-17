@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,7 +27,6 @@ final class ParserExpressionTests {
         test(tokens, expected, Parser::parseStatement);
     }
 
-
     private static Stream<Arguments> testExpressionStatement() {
         return Stream.of(
                 Arguments.of("Function Expression",
@@ -37,7 +37,7 @@ final class ParserExpressionTests {
                                 new Token(Token.Type.OPERATOR, ")", 5),
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
-                        new Ast.Statement.Expression(new Ast.Expression.Function("name", Arrays.asList()))
+                        new Ast.Statement.Expression(new Ast.Expression.Function("name", Collections.emptyList()))
                 )
         );
     }
@@ -62,7 +62,17 @@ final class ParserExpressionTests {
                                 new Ast.Expression.Access(Optional.empty(), "name"),
                                 new Ast.Expression.Access(Optional.empty(), "value")
                         )
-                )
+                ),
+                Arguments.of("Assignment",
+                        Arrays.asList(
+                                //name = value;
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "=", 5),
+                                new Token(Token.Type.IDENTIFIER, ";", 7)
+                        ),
+                        new ParseException("Invalid expression after equal sign", 7)
+                        )
+
         );
     }
 
@@ -75,27 +85,27 @@ final class ParserExpressionTests {
     private static Stream<Arguments> testLiteralExpression() {
         return Stream.of(
                 Arguments.of("Boolean Literal",
-                        Arrays.asList(new Token(Token.Type.IDENTIFIER, "TRUE", 0)),
+                        Collections.singletonList(new Token(Token.Type.IDENTIFIER, "TRUE", 0)),
                         new Ast.Expression.Literal(Boolean.TRUE)
                 ),
                 Arguments.of("Integer Literal",
-                        Arrays.asList(new Token(Token.Type.INTEGER, "1", 0)),
+                        Collections.singletonList(new Token(Token.Type.INTEGER, "1", 0)),
                         new Ast.Expression.Literal(new BigInteger("1"))
                 ),
                 Arguments.of("Decimal Literal",
-                        Arrays.asList(new Token(Token.Type.DECIMAL, "2.0", 0)),
+                        Collections.singletonList(new Token(Token.Type.DECIMAL, "2.0", 0)),
                         new Ast.Expression.Literal(new BigDecimal("2.0"))
                 ),
                 Arguments.of("Character Literal",
-                        Arrays.asList(new Token(Token.Type.CHARACTER, "'c'", 0)),
+                        Collections.singletonList(new Token(Token.Type.CHARACTER, "'c'", 0)),
                         new Ast.Expression.Literal('c')
                 ),
                 Arguments.of("String Literal",
-                        Arrays.asList(new Token(Token.Type.STRING, "\"string\"", 0)),
+                        Collections.singletonList(new Token(Token.Type.STRING, "\"string\"", 0)),
                         new Ast.Expression.Literal("string")
                 ),
                 Arguments.of("Escape Character",
-                        Arrays.asList(new Token(Token.Type.STRING, "\"Hello,\\nWorld!\"", 0)),
+                        Collections.singletonList(new Token(Token.Type.STRING, "\"Hello,\\nWorld!\"", 0)),
                         new Ast.Expression.Literal("Hello,\nWorld!")
                 )
         );
@@ -203,7 +213,7 @@ final class ParserExpressionTests {
     private static Stream<Arguments> testAccessExpression() {
         return Stream.of(
                 Arguments.of("Variable",
-                        Arrays.asList(new Token(Token.Type.IDENTIFIER, "name", 0)),
+                        Collections.singletonList(new Token(Token.Type.IDENTIFIER, "name", 0)),
                         new Ast.Expression.Access(Optional.empty(), "name")
                 ),
                 Arguments.of("List Index Access",
@@ -234,7 +244,7 @@ final class ParserExpressionTests {
                                 new Token(Token.Type.OPERATOR, "(", 4),
                                 new Token(Token.Type.OPERATOR, ")", 5)
                         ),
-                        new Ast.Expression.Function("name", Arrays.asList())
+                        new Ast.Expression.Function("name", Collections.emptyList())
                 ),
                 Arguments.of("Multiple Arguments",
                         Arrays.asList(

@@ -162,8 +162,8 @@ public abstract class Ast {
 
         public static final class Declaration extends Statement {
 
-            private String name;
-            private Optional<Ast.Expression> value;
+            private final String name;
+            private final Optional<Ast.Expression> value;
 
             public Declaration(String name, Optional<Ast.Expression> value) {
                 this.name = name;
@@ -221,7 +221,7 @@ public abstract class Ast {
             }
 
             @Override
-            public final String toString() {
+            public String toString() {
                 return "Ast.Statement.Assignment{" +
                         "receiver=" + receiver +
                         ", value=" + value +
@@ -406,7 +406,7 @@ public abstract class Ast {
 
     }
 
-    public static class Expression extends Ast {
+    public static abstract class Expression extends Ast {
 
         public static final class Literal extends Ast.Expression {
 
