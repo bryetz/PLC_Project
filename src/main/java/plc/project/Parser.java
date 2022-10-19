@@ -1,12 +1,9 @@
 package plc.project;
 
-import jdk.nashorn.internal.runtime.ParserException;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -38,6 +35,7 @@ public final class Parser {
         List<Ast.Function> functions = new java.util.ArrayList<>(Collections.emptyList());
         while (peek("LIST") || peek("VAR") || peek("VAL")) {
             globals.add(parseGlobal());
+            if (!match(";")) throw new ParseException("No semicolon after global!", tokens.get(-1).getIndex());
         }
 
         while (peek("FUN")) {
@@ -60,7 +58,7 @@ public final class Parser {
             return parseImmutable();
         }
 
-        throw new ParseException("Invalid global!", tokens.index);
+        throw new ParseException("Invalid global!", tokens.get(-1).getIndex());
     }
 
     /**
@@ -70,23 +68,19 @@ public final class Parser {
     public Ast.Global parseList() throws ParseException {
         match("LIST");
         match(Token.Type.IDENTIFIER);
-        if (!match("=")) {
-            throw new ParseException("Invalid list!", tokens.index);
-        }
+        String lit = tokens.get(-1).getLiteral();
+        if (!match("=")) throw new ParseException("Invalid list!", tokens.get(-1).getIndex());
 
-        if (!match("[")) {
-            throw new ParseException("Invalid list! Missing opening bracket", tokens.index);
-        }
+        if (!match("[")) throw new ParseException("Invalid list! Missing opening bracket", tokens.get(-1).getIndex());
+
         Ast.Expression exp = parseExpression();
         while (match(",")) {
             parseExpression();
         }
 
-        if (!match("]")) {
-            throw new ParseException("No closing bracket for list!", tokens.index);
-        }
+        if (!match("]")) throw new ParseException("No closing bracket for list!", tokens.get(-1).getIndex());
 
-        return new Ast.Global(tokens.get(-1).getLiteral(), true, Optional.of(exp));
+        return new Ast.Global(lit, true, Optional.of(exp));
     }
 
     /**
@@ -113,11 +107,9 @@ public final class Parser {
         match("VAL");
         match(Token.Type.IDENTIFIER);
         String token = tokens.get(-1).getLiteral();
-        if (!match("=")) {
-            throw new ParseException("Invalid immutable!", tokens.index);
-        }
-
+        if (!match("=")) throw new ParseException("Invalid immutable!", tokens.get(-1).getIndex());
         Ast.Expression exp = parseExpression();
+
         return new Ast.Global(token, false, Optional.of(exp));
     }
 
@@ -131,24 +123,23 @@ public final class Parser {
         String name = tokens.get(-1).getLiteral();
         List<String> parameters = new java.util.ArrayList<>(Collections.emptyList());
 
-        if (!match("(")) throw new ParseException("Missing opening parenthesis", tokens.index);
+        if (!match("(")) throw new ParseException("Missing opening parenthesis", tokens.get(-1).getIndex());
         if (match(Token.Type.IDENTIFIER)) {
             while (match(",")) {
-                if (!match(Token.Type.IDENTIFIER)) {
-                    throw new ParseException("Trailing comma not allowed!", tokens.index);
-                }
+                if (!match(Token.Type.IDENTIFIER))
+                    throw new ParseException("Trailing comma not allowed!", tokens.get(-1).getIndex());
 
                 parameters.add(tokens.get(-1).getLiteral());
             }
         }
 
-        if (!match(")")) throw new ParseException("Missing matching closing parenthesis", tokens.index);
+        if (!match(")")) throw new ParseException("Missing matching closing parenthesis", tokens.get(-1).getIndex());
 
-        if (!match("DO")) throw new ParseException("Invalid function!", tokens.index);
+        if (!match("DO")) throw new ParseException("Invalid function!", tokens.get(-1).getIndex());
 
         List<Ast.Statement> statements = parseBlock();
 
-        if (!match("END")) throw new ParseException("Invalid function!", tokens.index);
+        if (!match("END")) throw new ParseException("Invalid function!", tokens.get(-1).getIndex());
 
         return new Ast.Function(name, parameters, statements);
     }
@@ -159,7 +150,7 @@ public final class Parser {
      */
     public List<Ast.Statement> parseBlock() throws ParseException {
         List<Ast.Statement> statements = new java.util.ArrayList<>(Collections.emptyList());
-        while (peek("LET") || peek("SWITCH") || peek("IF") || peek("WHILE") || peek("RETURN") || peek(Token.Type.IDENTIFIER)) {
+        while (!peek("CASE") && !peek("DEFAULT") && !peek("END") && !peek("ELSE")) {
             statements.add(parseStatement());
         }
 
@@ -173,66 +164,26 @@ public final class Parser {
      */
     public Ast.Statement parseStatement() throws ParseException {
         if (match("LET")) {
-            if (!match(Token.Type.IDENTIFIER)) {
-                throw new ParseException("Invalid statement!", tokens.index);
-            } else {
-                Token t = tokens.get(-1);
-                if (match(";")) {
-                    return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.empty());
-                }
-            }
-
-            Token t = tokens.get(-1);
-            if (match("=")) {
-                Ast.Expression other = parseExpression();
-                if (!match(";")) {
-                    throw new ParseException("Missing semicolon after statement!", tokens.index);
-                }
-
-                return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(other));
-            }
+            return parseDeclarationStatement();
         } else if (match("SWITCH")) {
-
+            return parseSwitchStatement();
         } else if (match("IF")) {
-            Ast.Expression exp = parseExpression();
-            match("DO");
-            List<Ast.Statement> statements = parseBlock();
-            List<Ast.Statement> elseStatements = Collections.emptyList();
-            if (match("ELSE")) {
-               elseStatements = parseBlock();
-            }
-            match("END");
-            return new Ast.Statement.If(exp, statements, elseStatements);
-
+            return parseIfStatement();
         } else if (match("WHILE")) {
-            Ast.Expression exp = parseExpression();
-            if (!match("DO")) throw new ParseException("Invalid while statement!", tokens.index);
-            List<Ast.Statement> statements = parseBlock();
-            if (!match("END")) throw new ParseException("Invalid while statement!", tokens.index);
-            return new Ast.Statement.While(exp, statements);
-
+            return parseWhileStatement();
         } else if (match("RETURN")) {
-            Ast.Expression exp = parseExpression();
-            if (!match(";")) {
-                throw new ParseException("Missing semicolon after statement!", tokens.index);
-            }
-
-            return new Ast.Statement.Return(exp);
+            return parseReturnStatement();
         }
 
         Ast.Expression exp = parseExpression();
         if (match("=")) {
             Ast.Expression other = parseExpression();
-            if (!match(";")) {
-                throw new ParseException("Missing semicolon after statement!", tokens.index);
-            }
+            if (!match(";")) throw new ParseException("Missing semicolon after statement!", tokens.get(-1).getIndex());
 
             return new Ast.Expression.Statement.Assignment(exp, other);
         }
 
-//        if (!match(";")) {
-//            throw new ParseException("Missing semicolon after statement!", tokens.index);
-//        }
+        if (!match(";")) throw new ParseException("Missing semicolon after statement!", tokens.get(-1).getIndex());
 
         return new Ast.Statement.Expression(exp);
     }
@@ -243,7 +194,24 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Invalid statement!", tokens.get(-1).getIndex());
+        } else {
+            Token t = tokens.get(-1);
+            if (match(";")) {
+                return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.empty());
+            }
+        }
+
+        Token t = tokens.get(-1);
+        if (match("=")) {
+            Ast.Expression other = parseExpression();
+            if (!match(";")) throw new ParseException("Missing semicolon after statement!", tokens.get(-1).getIndex());
+
+            return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(other));
+        }
+
+        throw new ParseException("Invalid declaration statement!", tokens.getIndex());
     }
 
     /**
@@ -252,7 +220,16 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression exp = parseExpression();
+        if (!match("DO")) throw new ParseException("Invalid if statement!", tokens.get(-1).getIndex());
+
+        List<Ast.Statement> statements = parseBlock();
+        List<Ast.Statement> elseStatements = Collections.emptyList();
+
+        if (match("ELSE")) elseStatements = parseBlock();
+
+        if (!match("END")) throw new ParseException("Invalid if statement!", tokens.get(-1).getIndex());
+        return new Ast.Statement.If(exp, statements, elseStatements);
     }
 
     /**
@@ -261,7 +238,19 @@ public final class Parser {
      * {@code SWITCH}.
      */
     public Ast.Statement.Switch parseSwitchStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression exp = parseExpression();
+        List<Ast.Statement.Case> cases = new java.util.ArrayList<>(Collections.emptyList());
+        while (peek("CASE")) {
+            cases.add(parseCaseStatement());
+        }
+
+        if (match("DEFAULT")) {
+            cases.add(parseCaseStatement());
+        }
+
+        if (!match("END")) throw new ParseException("Invalid switch statement!", tokens.get(-1).getIndex());
+
+        return new Ast.Statement.Switch(exp, cases);
     }
 
     /**
@@ -270,7 +259,15 @@ public final class Parser {
      * default block of a switch statement, aka {@code CASE} or {@code DEFAULT}.
      */
     public Ast.Statement.Case parseCaseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("CASE")) {
+            Ast.Expression exp = parseExpression();
+            if (!match(":")) throw new ParseException("Invalid case statement!", tokens.get(-1).getIndex());
+            List<Ast.Statement> statements = parseBlock();
+            return new Ast.Statement.Case(Optional.of(exp), statements);
+        }
+
+        List<Ast.Statement> statements = parseBlock();
+        return new Ast.Statement.Case(Optional.empty(), statements);
     }
 
     /**
@@ -279,7 +276,11 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression exp = parseExpression();
+        if (!match("DO")) throw new ParseException("Invalid while statement!", tokens.get(-1).getIndex());
+        List<Ast.Statement> statements = parseBlock();
+        if (!match("END")) throw new ParseException("Invalid while statement!", tokens.get(-1).getIndex());
+        return new Ast.Statement.While(exp, statements);
     }
 
     /**
@@ -288,7 +289,9 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Statement.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression exp = parseExpression();
+        if (!match(";")) throw new ParseException("Missing semicolon after statement!", tokens.get(-1).getIndex());
+        return new Ast.Statement.Return(exp);
     }
 
     /**
@@ -399,24 +402,18 @@ public final class Parser {
             stringToken = stringToken.replace("\\t", "\t");
             return new Ast.Expression.Literal(stringToken);
         } else if (match(")")) {
-            throw new ParseException("Invalid closing parenthesis!", tokens.index);
+            throw new ParseException("Invalid closing parenthesis!", tokens.get(-1).getIndex());
         } else if (match("(")) {
             Ast.Expression exp = parseExpression();
-            if (!match(")")) {
-                throw new ParseException("Missing closing parenthesis!", tokens.index);
-            }
-
+            if (!match(")")) throw new ParseException("Missing closing parenthesis!", tokens.get(-1).getIndex());
             return new Ast.Expression.Group(exp);
         } else if (match(Token.Type.IDENTIFIER)) {
             Token t = tokens.get(-1);
             List<Ast.Expression> arguments = new java.util.ArrayList<>(Collections.emptyList());
             if (match("(")) {
-                if (match(",")) {
-                    throw new ParseException("Trailing comma not allowed!", tokens.index);
-                }
-                if (match(")")) {
-                    return new Ast.Expression.Function(t.getLiteral(), arguments);
-                }
+                if (match(",")) throw new ParseException("Trailing comma not allowed!", tokens.get(-1).getIndex());
+
+                if (match(")")) return new Ast.Expression.Function(t.getLiteral(), arguments);
 
                 parseExpression();
                 arguments.add(new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral()));
@@ -425,13 +422,9 @@ public final class Parser {
                     arguments.add(new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral()));
                 }
 
-                if (!match(")")) {
-                    throw new ParseException("No closing parenthesis for function!", tokens.index);
-                }
+                if (!match(")")) throw new ParseException("No closing parenthesis for function!", tokens.get(-1).getIndex());
 
-                if (match(",")) {
-                    throw new ParseException("Trailing comma not allowed!", tokens.index);
-                }
+                if (match(",")) throw new ParseException("Trailing comma not allowed!", tokens.get(-1).getIndex());
 
                 return new Ast.Expression.Function(t.getLiteral(), arguments);
 
@@ -439,10 +432,7 @@ public final class Parser {
                 String lit = tokens.get(-1).getLiteral();
                 match("[");
                 Ast.Expression exp = parseExpression();
-
-                if (!match("]")) {
-                    throw new ParseException("No closing bracket for function!", tokens.index);
-                }
+                if (!match("]")) throw new ParseException("No closing bracket for function!", tokens.get(-1).getIndex());
 
                 return new Ast.Expression.Access(Optional.of(exp), lit);
 
@@ -450,10 +440,9 @@ public final class Parser {
                 return new Ast.Expression.Access(Optional.empty(), tokens.get(-1).getLiteral());
             }
         } else {
-            throw new ParseException("Invalid expression!", tokens.index);
+            throw new ParseException("Invalid expression!", tokens.get(-1).getIndex());
         }
     }
-
 
     /**
      * As in the lexer, returns {@code true} if the current sequence of tokens
@@ -479,7 +468,6 @@ public final class Parser {
                 }
             } else {
                 throw new AssertionError("Invalid pattern object: " + patterns[i].getClass());
-
             }
         }
         return true;
@@ -535,5 +523,4 @@ public final class Parser {
         }
 
     }
-
 }
