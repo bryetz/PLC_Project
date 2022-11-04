@@ -3,8 +3,7 @@ package plc.project;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -36,7 +35,14 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Global> globals=ast.getGlobals();
+        globals.forEach(global->visit(global));
+        List<Ast.Function> functions = ast.getFunctions();
+        functions.forEach(function->visit(function));
+
+            Environment.Function main = scope.lookupFunction("main", 0);
+            return main.invoke(Collections.emptyList());
+
     }
 
     @Override
@@ -45,16 +51,16 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         if (ast.getMutable()) {
             if (ast.getValue().isPresent()) {
                 value=visit(ast.getValue().get());
-                scope.defineVariable(ast.getName(), ast.getMutable(), value);
+                scope.defineVariable(ast.getName(), true, value);
             }
             else {
-                scope.defineVariable(ast.getName(), ast.getMutable(), value);
+                scope.defineVariable(ast.getName(), true, value);
             }
         }
         else {
             if(ast.getValue().isPresent()) {
                 value=visit(ast.getValue().get());
-                scope.defineVariable(ast.getName(), ast.getMutable(), value);
+                scope.defineVariable(ast.getName(), false, value);
             }
             else {
                 throw new RuntimeException("Value must be declared for immutable type");
@@ -65,9 +71,35 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
-        throw new UnsupportedOperationException();
+        Scope currentScope = scope;
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            Scope childScope = scope;
+            try {
+            scope = new Scope(currentScope);
+            List<String> params = ast.getParameters();
+            for(int i=0; i< ast.getParameters().size(); i++) {
+                scope.defineVariable(params.get(i), true, args.get(i));
+
+            }
+
+                List<Ast.Statement> statements = ast.getStatements();
+                for (int j = 0; j < statements.size(); j++) {
+                    visit(statements.get(j));
+                }
+                return Environment.NIL;
+            } catch(Return Ret) {
+                return Ret.value;
+            }
+            finally {
+                scope=childScope;
+            }
+        });
+            return Environment.NIL;
+        }
+
+//        throw new UnsupportedOperationException();
 //        scope.defineFunction(ast.getName());
-    }
+
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
@@ -112,16 +144,18 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression expression = ast.getValue();
+        throw new Return(visit(expression));
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Literal ast) {
-        if(ast.toString().contains("literal=null")) {
-            return Environment.NIL;
+        Object literal=ast.getLiteral();
+        if(Objects.isNull(literal)) {
+            return new Environment.PlcObject(this.scope,Environment.NIL.getValue());
         }
         else {
-            return Environment.create(ast.getLiteral());
+            return new Environment.PlcObject(this.scope, literal);
         }
     }
 
