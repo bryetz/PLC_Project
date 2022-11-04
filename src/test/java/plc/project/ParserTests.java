@@ -32,6 +32,21 @@ final class ParserTests {
                         Arrays.asList(),
                         new Ast.Source(Arrays.asList(), Arrays.asList())
                 ),
+                Arguments.of("List",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "LIST", 0),
+                                new Token(Token.Type.IDENTIFIER, "list", 5),
+                                new Token(Token.Type.OPERATOR, "=", 7),
+                                new Token(Token.Type.OPERATOR, "[", 9),
+                                new Token(Token.Type.IDENTIFIER, "expr", 10),
+                                new Token(Token.Type.OPERATOR, "]", 14),
+                                new Token(Token.Type.OPERATOR, ";", 15)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Global("list", true, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
+                                Arrays.asList()
+                        )
+                ),
                 Arguments.of("Global - Immutable",
                         Arrays.asList(
                                 //VAL name = expr;
@@ -531,6 +546,7 @@ final class ParserTests {
                         )
                 ))
         ));
+
         test(input, expected, Parser::parseSource);
     }
 

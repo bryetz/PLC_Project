@@ -68,18 +68,10 @@ final class ParserExpressionTests {
                                 //name = value;
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "=", 5),
-<<<<<<< HEAD
-                                new Token(Token.Type.IDENTIFIER, ";", 7)
-                        ),
-                        new ParseException("Invalid expression after equal sign", 7)
-                        )
-
-=======
                                 new Token(Token.Type.OPERATOR, ";", 7)
                         ),
                         null
                 )
->>>>>>> 7abc066773325addcc526678100d82781a55a986
         );
     }
 
