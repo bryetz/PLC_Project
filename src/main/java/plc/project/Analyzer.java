@@ -125,7 +125,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         Ast.Expression receiver = ast.getReceiver();
         Ast.Expression value = ast.getValue();
         if (!(receiver instanceof Ast.Expression.Access))
-            throw new RuntimeException("The receiver has to be an access expression.");
+            throw new RuntimeException("The receiver is not an Ast.Expression.Access!");
 
         visit(receiver);
         visit(value);
