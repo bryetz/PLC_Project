@@ -41,14 +41,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Global ast) {
         boolean present = ast.getValue().isPresent();
-        if(present) {
+        if (present) {
             Ast.Expression val = ast.getValue().get();
             visit(val);
             requireAssignable(Environment.getType(ast.getTypeName()), val.getType());
         }
 
         String name = ast.getName();
-        Environment.Variable variable = scope.defineVariable(name, name, Environment.getType(ast.getTypeName()),ast.getMutable(), Environment.NIL);
+        Environment.Variable variable = scope.defineVariable(name, name, Environment.getType(ast.getTypeName()), ast.getMutable(), Environment.NIL);
         ast.setVariable(variable);
         return null;
     }
@@ -61,13 +61,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         List<String> paramTypeNames = ast.getParameterTypeNames();
 
-        for(String parameterType:paramTypeNames)
+        for (String parameterType : paramTypeNames)
             params.add(Environment.getType(parameterType));
 
-        if(ast.getReturnTypeName().isPresent())
+        if (ast.getReturnTypeName().isPresent())
             type = Environment.getType(ast.getReturnTypeName().get());
 
-        Environment.Function fun = scope.defineFunction(name, name, params, type, args->Environment.NIL);
+        Environment.Function fun = scope.defineFunction(name, name, params, type, args -> Environment.NIL);
         ast.setFunction(fun);
 
         scope = new Scope(scope);
@@ -101,13 +101,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
             throw new RuntimeException("Must have at least a type present or a value present!");
         }
 
-        if(typePresent) {
+        if (typePresent) {
             envType = Environment.getType(type.get());
         }
 
         if (valPresent) {
             visit(val.get());
-            if(Objects.isNull(envType)) {
+            if (Objects.isNull(envType)) {
                 envType = val.get().getType();
             }
 
@@ -166,7 +166,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         List<Ast.Statement.Case> cases = ast.getCases();
         int offset = cases.size() - 1;
-        for(int i = 0; i < offset; i++) {
+        for (int i = 0; i < offset; i++) {
             Ast.Statement.Case caseBlock = cases.get(i);
             Ast.Expression val = caseBlock.getValue().get();
             visit(val);
