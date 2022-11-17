@@ -324,7 +324,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                         ast.setType(ast.getLeft().getType());
                         return null;
                     } else {
-                        throw new RuntimeException("Right side is not of required type " + (ast.getLeft().getType().getName()));
+                        throw new RuntimeException("Right side is not of required type");
                     }
                 } else {
                     throw new RuntimeException("Only STRING, INTEGER, and DECIMAL are supported for this operation!");
@@ -335,7 +335,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                         ast.setType(ast.getLeft().getType());
                         return null;
                     } else {
-                        throw new RuntimeException("Right side is not of required type " + (ast.getLeft().getType().getName()));
+                        throw new RuntimeException("Right side is not of required type");
                     }
                 } else {
                     throw new RuntimeException("Only INTEGER and DECIMAL are supported for this operation!");
@@ -346,7 +346,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                         ast.setType(ast.getLeft().getType());
                         return null;
                     } else {
-                        throw new RuntimeException("Right side is not of required type " + (ast.getLeft().getType().getName()));
+                        throw new RuntimeException("Right side is not of required type");
                     }
                 } else {
                     throw new RuntimeException("Only INTEGER and DECIMAL are supported for this operation!");
@@ -357,7 +357,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
                         ast.setType(ast.getLeft().getType());
                         return null;
                     } else {
-                        throw new RuntimeException("Right side is not of required type " + (ast.getLeft().getType().getName()));
+                        throw new RuntimeException("Right side is not of required type");
                     }
                 } else {
                     throw new RuntimeException("Only INTEGER and DECIMAL are supported for this operation!");
@@ -436,7 +436,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             if ((type.equals(Environment.Type.INTEGER)) || (type.equals(Environment.Type.DECIMAL)) || (type.equals(Environment.Type.CHARACTER)) || (type.equals(Environment.Type.STRING)))
                 return;
             else
-                throw new RuntimeException("Invalid COMPARABLE! Cannot be of type " + type.getName());
+                throw new RuntimeException("Invalid COMPARABLE!");
         } else {
             throw new RuntimeException("Cannot assign target to specified type!");
         }
