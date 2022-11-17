@@ -41,14 +41,19 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Global ast) {
         boolean present = ast.getValue().isPresent();
+        String typeName = ast.getTypeName();
+        Environment.Type envType = Environment.getType(typeName);
         if (present) {
             Ast.Expression val = ast.getValue().get();
+            if (val instanceof Ast.Expression.PlcList)
+                ((Ast.Expression.PlcList) val).setType(envType);
+
             visit(val);
-            requireAssignable(Environment.getType(ast.getTypeName()), val.getType());
+            requireAssignable(envType, val.getType());
         }
 
         String name = ast.getName();
-        Environment.Variable variable = scope.defineVariable(name, name, Environment.getType(ast.getTypeName()), ast.getMutable(), Environment.NIL);
+        Environment.Variable variable = scope.defineVariable(name, name, envType, ast.getMutable(), Environment.NIL);
         ast.setVariable(variable);
         return null;
     }
@@ -408,14 +413,15 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.PlcList ast) {
-        Environment.Type type = ast.getType();
-        if (type.equals(Environment.Type.ANY))
+        Environment.Type envType = ast.getType();
+        if (envType.equals(Environment.Type.ANY))
             return null;
 
-        for (Ast.Expression val : ast.getValues()) {
-            visit(val);
-            Environment.Type valType = val.getType();
-            requireAssignable(type, valType);
+        List<Ast.Expression> values = ast.getValues();
+        for (int i = 0; i < ast.getValues().size(); i++) {
+            visit(values.get(i));
+            Environment.Type valType = values.get(i).getType();
+            requireAssignable(envType, valType);
         }
 
         return null;
