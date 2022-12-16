@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -35,7 +36,6 @@ public final class Parser {
         List<Ast.Function> functions = new java.util.ArrayList<>(Collections.emptyList());
         while (peek("LIST") || peek("VAR") || peek("VAL")) {
             globals.add(parseGlobal());
-            if (!match(";")) throw new ParseException("No semicolon after global!", tokens.get(-1).getIndex());
         }
 
         while (peek("FUN")) {
@@ -68,7 +68,15 @@ public final class Parser {
     public Ast.Global parseList() throws ParseException {
         match("LIST");
         match(Token.Type.IDENTIFIER);
+        String type = null;
         String lit = tokens.get(-1).getLiteral();
+
+        if (match(":")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                type = tokens.get(-1).getLiteral();
+            }
+        }
+
         if (!match("=")) throw new ParseException("Invalid list!", tokens.get(-1).getIndex());
 
         if (!match("[")) throw new ParseException("Invalid list! Missing opening bracket", tokens.get(-1).getIndex());
@@ -80,7 +88,7 @@ public final class Parser {
 
         if (!match("]")) throw new ParseException("No closing bracket for list!", tokens.get(-1).getIndex());
 
-        return new Ast.Global(lit, true, Optional.of(exp));
+        return new Ast.Global(lit, type, true, Optional.of(exp));
     }
 
     /**
@@ -91,12 +99,18 @@ public final class Parser {
         match("VAR");
         match(Token.Type.IDENTIFIER);
         String token = tokens.get(-1).getLiteral();
+        String type = null;
+        if (match(":")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                type = tokens.get(-1).getLiteral();
+            }
+        }
         if (match("=")) {
             Ast.Expression exp = parseExpression();
-            return new Ast.Global(token, true, Optional.of(exp));
+            return new Ast.Global(token, type, true, Optional.of(exp));
         }
 
-        return new Ast.Global(token, true, Optional.empty());
+        return new Ast.Global(token, type, true, Optional.empty());
     }
 
     /**
@@ -104,13 +118,18 @@ public final class Parser {
      * next token declares an immutable global variable, aka {@code VAL}.
      */
     public Ast.Global parseImmutable() throws ParseException {
+        String type = null;
         match("VAL");
         match(Token.Type.IDENTIFIER);
         String token = tokens.get(-1).getLiteral();
+        if (match(":")) {
+            match(Token.Type.IDENTIFIER);
+            type = tokens.get(-1).getLiteral();
+        }
         if (!match("=")) throw new ParseException("Invalid immutable!", tokens.get(-1).getIndex());
         Ast.Expression exp = parseExpression();
 
-        return new Ast.Global(token, false, Optional.of(exp));
+        return new Ast.Global(token, type, false, Optional.of(exp));
     }
 
     /**
@@ -118,22 +137,39 @@ public final class Parser {
      * next tokens start a method, aka {@code FUN}.
      */
     public Ast.Function parseFunction() throws ParseException {
+        String type = null;
         match("FUN");
         match(Token.Type.IDENTIFIER);
         String name = tokens.get(-1).getLiteral();
         List<String> parameters = new java.util.ArrayList<>(Collections.emptyList());
+        List<String> paramTypes = new java.util.ArrayList<>(Collections.emptyList());
 
         if (!match("(")) throw new ParseException("Missing opening parenthesis", tokens.get(-1).getIndex());
         if (match(Token.Type.IDENTIFIER)) {
+            parameters.add(tokens.get(-1).getLiteral());
+            if (match(":")) {
+                if (match(Token.Type.IDENTIFIER)) {
+                    paramTypes.add(tokens.get(-1).getLiteral());
+                }
+            }
             while (match(",")) {
                 if (!match(Token.Type.IDENTIFIER))
                     throw new ParseException("Trailing comma not allowed!", tokens.get(-1).getIndex());
-
                 parameters.add(tokens.get(-1).getLiteral());
+                if (match(":")) {
+                    if (match(Token.Type.IDENTIFIER)) {
+                        paramTypes.add(tokens.get(-1).getLiteral());
+                    }
+                }
             }
         }
 
         if (!match(")")) throw new ParseException("Missing matching closing parenthesis", tokens.get(-1).getIndex());
+
+        if (match(":")) {
+            match(Token.Type.IDENTIFIER);
+            type = tokens.get(-1).getLiteral();
+        }
 
         if (!match("DO")) throw new ParseException("Invalid function!", tokens.get(-1).getIndex());
 
@@ -141,7 +177,7 @@ public final class Parser {
 
         if (!match("END")) throw new ParseException("Invalid function!", tokens.get(-1).getIndex());
 
-        return new Ast.Function(name, parameters, statements);
+        return new Ast.Function(name, parameters, paramTypes, Optional.of(type), statements);
     }
 
     /**
@@ -194,12 +230,19 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
+        String type = null;
         if (!match(Token.Type.IDENTIFIER)) {
             throw new ParseException("Invalid statement!", tokens.get(-1).getIndex());
         } else {
             Token t = tokens.get(-1);
+
+            if (match(":")) {
+                match(Token.Type.IDENTIFIER);
+                type = tokens.get(-1).getLiteral();
+            }
+
             if (match(";")) {
-                return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.empty());
+                return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(type), Optional.empty());
             }
         }
 
@@ -208,7 +251,11 @@ public final class Parser {
             Ast.Expression other = parseExpression();
             if (!match(";")) throw new ParseException("Missing semicolon after statement!", tokens.get(-1).getIndex());
 
-            return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(other));
+            if (Objects.isNull(type)) {
+                return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(other));
+            }
+
+            return new Ast.Expression.Statement.Declaration(t.getLiteral(), Optional.of(type), Optional.of(other));
         }
 
         throw new ParseException("Invalid declaration statement!", tokens.getIndex());
